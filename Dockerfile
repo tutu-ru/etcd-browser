@@ -1,4 +1,4 @@
-FROM centos:7
+FROM centos:7.1.1503
 MAINTAINER Andrey Todoshchenko "todoshcenko@tutu.ru"
 
 RUN yum install -y epel-release
