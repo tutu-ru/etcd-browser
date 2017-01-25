@@ -16,6 +16,43 @@
 <script src="angular-xeditable/js/xeditable.js"></script>
 <link rel="stylesheet" href="main.css">
 <script src="etcdbrowser.js"></script>
+
+<style>
+.fixed {
+    position: fixed;
+    top: 0px;
+    width: 50%;
+    left: 50%;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+        var sticky = document.querySelector('#value-editor');
+        var originalOffsetY = 0; 
+
+        function onScroll(e) {
+                if (originalOffsetY == 0) { originalOffsetY = sticky.getBoundingClientRect().top; }
+                if (window.pageYOffset >= originalOffsetY) {
+                        sticky.classList.add('fixed');
+                } else {
+                        sticky.classList.remove('fixed');
+                }
+        }
+
+        function onScrollIfInIframe() {
+                if (window.parent.pageYOffset > 0) {
+                        sticky.style.transform = 'translateY(' + window.parent.pageYOffset + 'px)';
+                } else {
+                        sticky.style.transform = null;
+                }
+        }
+
+        document.addEventListener('scroll', onScroll);
+        if (window != window.parent) { window.parent.addEventListener('scroll', onScrollIfInIframe); }
+});
+</script>
+
 </head>
 <body>
 <script type="text/ng-template" id="prop-block">
@@ -77,7 +114,7 @@
     </div>
     <div ng-if="error" class="alert alert-danger alert-dismissible" role="alert">{{error}}</div>
     <div class="row top-buffer">
-      <div class="col-md-6">
+      <div class="col-md-6" style="width:50%;">
         <div class="tree prop-block" >
           <ul>
             <li>
@@ -95,7 +132,7 @@
           </ul>
         </div>
       </div>
-      <div class="col-md-6">
+      <div id="value-editor" class="col-md-6">
         <div class="prop-block" ng-include="'prop-block'" ng-if="activeNode"></div>
       </div>
     </div>
