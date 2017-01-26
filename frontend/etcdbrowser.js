@@ -203,3 +203,30 @@ app.controller('NodeCtrl', ['$scope','$http','$cookies', function($scope,$http,$
 app.run(function(editableOptions) {
   editableOptions.theme = 'bs3';
 });
+
+
+$(document).ready(function () {
+        var sticky = document.querySelector('#value-editor');
+        var originalOffsetY = 0;
+
+        function onScroll(e) {
+                if (originalOffsetY == 0) { originalOffsetY = sticky.getBoundingClientRect().top; }
+                if (window.pageYOffset >= originalOffsetY) {
+                        sticky.classList.add('fixed');
+                } else {
+                        sticky.classList.remove('fixed');
+                }
+        }
+
+        function onScrollIfInIframe() {
+                if (window.parent.pageYOffset > 0) {
+                        sticky.style.transform = 'translateY(' + window.parent.pageYOffset + 'px)';
+                } else {
+                        sticky.style.transform = null;
+                }
+        }
+
+        document.addEventListener('scroll', onScroll);
+        if (window != window.parent) { window.parent.addEventListener('scroll', onScrollIfInIframe); }
+});
+
