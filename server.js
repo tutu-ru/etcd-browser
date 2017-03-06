@@ -93,6 +93,9 @@ function proxy(client_req, client_res) {
     opts.cert = fs.readFileSync(cert_file);
   }
 
+  if (opts.method != "GET") {
+       	console.log(opts.method + ' ' + opts.path);
+  }
   client_req.pipe(requester(opts, function(res) {
     // if etcd returns that the requested  page  has been moved
     // to a different location, indicates that the node we are
