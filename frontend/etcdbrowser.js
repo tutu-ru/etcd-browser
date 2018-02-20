@@ -302,7 +302,7 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', function ($scope, $ht
   function compareBranches(br1, br2, prefix, coinciding) {
     for (var key in br1) {
       if (typeof br1[key] === 'string') {
-        if (br2.hasOwnProperty(key) && br2[key] !== br1[key]) {
+        if (br2.hasOwnProperty(key) && typeof br2[key] === 'string' && br2[key] !== br1[key]) {
           coinciding[(prefix ? prefix + '/' : '') + key] = [br1[key], br2[key]];
         }
       } else if (br2.hasOwnProperty(key) && typeof br2[key] === 'object') {
