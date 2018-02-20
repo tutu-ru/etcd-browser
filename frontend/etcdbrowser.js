@@ -164,6 +164,74 @@ app.controller('NodeCtrl', ['$scope','$http','$cookies', function($scope,$http,$
     }
     return dirName;
   }
+  
+  $scope.serializeDir = function(node) {
+      return $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + node.key + '?recursive=true'}).
+        success(function(data) {
+          var serialized = {};
+          prepNodesRecursive(data.node, serialized);
+		  var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(serialized, null, '\t'));
+		  var dlAnchorElem = document.getElementById('downloadAnchorElem');
+		  dlAnchorElem.setAttribute("href",     dataStr     );
+		  dlAnchorElem.setAttribute("download", data.node.key.replace(/\//ig, '_') + ".json");
+		  dlAnchorElem.click();
+        }).
+        error(errorHandler)
+  }
+  
+  $scope.setTargetDir = function(node) {
+    $scope.targetDir = node.key;
+  }
+  
+  $scope.deserializeDir = function(target) {
+    var file = $('#loadDirForm [name=file]')[0].files[0];
+    if (!file || file.type !== 'application/json') {
+      alert('Please select a json file');
+    } else {
+		if (confirm('Deserialize file to directory ' + target + '?')) {
+			var reader = new FileReader();
+			reader.onload = function(e) {
+			  var newBranch = JSON.parse(e.target.result);
+			  $http({method: 'GET', url: $scope.getPrefix() + keyPrefix + target + '?recursive=true'}).
+              success(function(data) {
+                var currentBranch = {};
+				prepNodesRecursive(data.node, currentBranch);
+				var coincidingNodes = {};
+				compareBranches(currentBranch, newBranch, '', coincidingNodes);
+				if (Object.keys(coincidingNodes).length > 0) {
+				  var message = 'There are matches in old and new config branches. Following nodes will be rewritten: \n';
+				  for (var key in coincidingNodes) {
+				    message += '\n' + key + ': ' + coincidingNodes[key][0] + ' -> ' + coincidingNodes[key][1];
+				  }
+				  if (confirm(message)) {
+				    $scope.deserialize(newBranch, target);
+				    $('#loadDirModal').modal('hide');
+                  }
+                } else {
+				  $scope.deserialize(newBranch, target);
+				  $('#loadDirModal').modal('hide');
+                }
+              }).
+              error(errorHandler)
+            };
+			reader.readAsText(file)
+		}
+	}
+  }
+  
+  $scope.deserialize = function (branch, target) {
+	  for (var key in branch) {
+		  if (typeof branch[key] === 'object') {
+			  $scope.deserialize(branch[key], target + '/' + key);
+		  } else {
+			  var url = $scope.getPrefix() + keyPrefix + target + '/' + key;
+			  $http({method: 'PUT',
+				  url: url,
+				  params: {"value": branch[key]}}).
+			  error(errorHandler);
+		  }
+	  }
+  }
 
   $scope.submit();
 
@@ -173,6 +241,31 @@ app.controller('NodeCtrl', ['$scope','$http','$cookies', function($scope,$http,$
       var name = node.key.substring(node.key.lastIndexOf("/")+1);
       node.name = name;
       node.parent = parent;
+    }
+  }
+	
+  function prepNodesRecursive(node, result){
+      for(var key in node.nodes){
+          var current = node.nodes[key];
+		  var name = current.key.substring(current.key.lastIndexOf("/")+1);
+          if (current.dir) {
+            result[name] = {};
+            prepNodesRecursive(current, result[name]);
+          } else {
+            result[name] = current.value;
+          }
+      }
+  }
+  
+  function compareBranches (br1, br2, prefix, coinciding) {
+    for (var key in br1) {
+      if (typeof br1[key] === 'string') {
+        if (br2.hasOwnProperty(key) && br2[key] !== br1[key]) {
+          coinciding[(prefix ? prefix + '/' : '') + key] = [br1[key], br2[key]];
+        }
+      } else if (br2.hasOwnProperty(key) && typeof br2[key] === 'object') {
+        compareBranches(br1[key], br2[key], (prefix ? prefix + '/' : '') + key, coinciding);
+      }
     }
   }
 

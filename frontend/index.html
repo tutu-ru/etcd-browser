@@ -16,9 +16,11 @@
 <script src="angular-xeditable/js/xeditable.js"></script>
 <link rel="stylesheet" href="main.css">
 <script src="etcdbrowser.js"></script>
-
+<meta charset="utf-8">
 </head>
 <body>
+<a id="downloadAnchorElem" style="display:none"></a>
+
 <script type="text/ng-template" id="prop-block">
   <button type="button" class="btn btn-default btn-xs" ng-click="addNode(activeNode)" title="Add Property">
     Add Property
@@ -56,6 +58,12 @@
     <button ng-if="node.open" type="button" class="btn btn-default btn-xs" ng-click="deleteDir(node)" title="Delete Directory">
       <span class="glyphicon glyphicon-trash"></span>
     </button>
+      <button ng-if="node.open" type="button" class="btn btn-default btn-xs" ng-click="serializeDir(node)" title="Serialize Directory">
+          <span class="glyphicon glyphicon-save"></span>
+      </button>
+      <button data-toggle="modal" type="button" class="btn btn-default btn-xs" data-target="#loadDirModal" ng-click="setTargetDir(node)" title="Deserialize Directory">
+          <span class="glyphicon glyphicon-open"></span>
+      </button>
   </div>
   <ul >
     <li ng-repeat="node in node.nodes | orderBy:'name'" ng-include="'tree-item'" ng-if="node.dir"></li>
@@ -118,6 +126,37 @@
 		    </div>
 		  </div>
 		</div>
+
+      <div class="modal fade" id="loadDirModal" tabindex="-1" role="dialog" aria-labelledby="loadDirModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+              <div class="modal-content">
+                  <form id="loadDirForm" ng-submit="deserializeDir(targetDir)">
+                      <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                          <h4 class="modal-title" id="loadDirModalLabel">Load Serialized Directory</h4>
+                      </div>
+                      <div class="modal-body">
+                          <div class="alert relative alert-info">
+                              <p>Здесь вы можете выбрать JSON-файл с сохранённой директорией конфигураций.</p>
+                              <p>
+                                  Если между существующими и импортируемыми узлами конфигурации будут наложения, 
+                                  система выдаст запрос на подтверждение перезаписи. <br/> 
+                                  В таком случае можно согласиться на перезапись или отменить загрузку 
+                                  и отредактировать JSON-файл вручную перед следующей попыткой
+                              </p>
+                          </div>
+                          <input type="file" name="file">
+                      </div>
+                      <div class="modal-footer">
+                          <span class="input-group-btn">
+                              <button class="btn btn-default" type="submit">Go!</button>
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                          </span>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      </div>
 	</div>
 
 </body>

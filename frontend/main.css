@@ -125,6 +125,10 @@ html, body {
   top: 1px;
 }
 
+.alert.relative {
+  position: relative;
+}
+
 td {
   white-space: nowrap;
 }
