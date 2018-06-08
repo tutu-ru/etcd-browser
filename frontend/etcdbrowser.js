@@ -263,6 +263,7 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', '$q', function ($scop
             var currentBranch = {};
             prepNodesRecursive(data.node, currentBranch);
             var coincidingNodes = {};
+            var requestsAccumulator = [];
             compareBranches(currentBranch, newBranch, '', coincidingNodes);
             if (Object.keys(coincidingNodes).length > 0) {
               var message = 'There are matches in old and new config branches. Following nodes will be rewritten: \n';
