@@ -1,6 +1,26 @@
 var app = angular.module("app", ["xeditable", "ngCookies"]);
 
-app.controller('NodeCtrl', ['$scope', '$http', '$cookies', function ($scope, $http, $cookies) {
+function confirmExit(on) {
+  if (on) {
+    var overlay = document.createElement('div');
+    var spinner = document.createElement('div');
+    var loader  = document.createElement('div');
+    loader.classList.add('loader');
+    spinner.classList.add('spinner');
+    overlay.classList.add('spinner-overlay');
+    spinner.appendChild(loader);
+    overlay.appendChild(spinner);
+    document.body.insertBefore(overlay, document.getElementById('downloadAnchorElem'));
+    window.onbeforeunload = function () { return true; };
+  } else {
+    return function () {
+      window.onbeforeunload = null;
+      document.body.removeChild(document.getElementsByClassName('spinner-overlay')[0]); 
+    };
+  }
+}
+
+app.controller('NodeCtrl', ['$scope', '$http', '$cookies', '$q', function ($scope, $http, $cookies, $q) {
   var keyPrefix = '/v2/keys',
     statsPrefix = '/v2/stats';
 
@@ -232,6 +252,14 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', function ($scope, $ht
             url: $scope.getPrefix() + keyPrefix + target + '?recursive=true'
           }).
           success(function (data) {
+            var proceed = function () {
+              $('#loadDirModal').modal('hide');
+              confirmExit(true);
+              setTimeout(function () {
+                $scope.deserialize(newBranch, target, requestsAccumulator);
+                $q.all(requestsAccumulator).then(confirmExit(false));
+              }, 500);
+            }
             var currentBranch = {};
             prepNodesRecursive(data.node, currentBranch);
             var coincidingNodes = {};
@@ -242,12 +270,10 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', function ($scope, $ht
                 message += '\n' + key + ': ' + coincidingNodes[key][0] + ' -> ' + coincidingNodes[key][1];
               }
               if (confirm(message)) {
-                $scope.deserialize(newBranch, target);
-                $('#loadDirModal').modal('hide');
+                proceed();
               }
             } else {
-              $scope.deserialize(newBranch, target);
-              $('#loadDirModal').modal('hide');
+              proceed();
             }
           }).
           error(errorHandler)
@@ -257,20 +283,22 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', function ($scope, $ht
     }
   }
 
-  $scope.deserialize = function (branch, target) {
+  $scope.deserialize = function (branch, target, acc) {
     for (var key in branch) {
       if (typeof branch[key] === 'object') {
-        $scope.deserialize(branch[key], target + '/' + key);
+        $scope.deserialize(branch[key], target + '/' + key, acc);
       } else {
         var url = $scope.getPrefix() + keyPrefix + target + '/' + key;
-        $http({
-          method: 'PUT',
-          url: url,
-          params: {
-            "value": branch[key]
-          }
-        }).
-        error(errorHandler);
+        acc.push(
+          $http({
+            method: 'PUT',
+            url: url,
+            params: {
+              "value": branch[key]
+            }
+          }).
+          error(errorHandler)
+        )
       }
     }
   }
