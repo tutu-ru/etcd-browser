@@ -240,7 +240,8 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', '$q', function ($scop
 
   $scope.deserializeDir = function (target) {
     var file = $('#loadDirForm [name=file]')[0].files[0];
-    if (!file || file.type !== 'application/json') {
+    var fileType = getFileType(file);
+    if (fileType !== 'application/json' && fileType !== 'json') {
       alert('Please select a json file');
     } else {
       if (confirm('Deserialize file to directory ' + target + '?')) {
@@ -338,6 +339,20 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', '$q', function ($scop
         compareBranches(br1[key], br2[key], (prefix ? prefix + '/' : '') + key, coinciding);
       }
     }
+  }
+
+  function getFileType(file) {
+    if (!file) {
+      return false;
+    }
+    if (file.type) {
+      return file.type;
+    }
+    if (!file.name) {
+      return false;
+    }
+    var fileNameParts = file.name.split('.');
+    return fileNameParts[fileNameParts.length - 1];
   }
 
   $scope.loadStats = function () {
