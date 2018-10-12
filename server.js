@@ -30,7 +30,7 @@ if(cert_file) {
 var etcdHost = process.env.ETCD_HOST || '172.17.42.1';
 var etcdPort = process.env.ETCD_PORT || 4001;
 var serverPort = process.env.SERVER_PORT || 8000;
-var publicDir = 'frontend';
+var publicDir = path.join(process.cwd(), 'frontend');
 var authUser = process.env.AUTH_USER;
 var authPass = process.env.AUTH_PASS;
 
@@ -62,15 +62,21 @@ http.createServer(function serverFile(req, res) {
     return proxy(req, res);
   }
   var uri = url.parse(req.url).pathname;
-  var filename = path.join(process.cwd(), publicDir, uri);
+  var filename = path.join(publicDir, uri);
 
   fs.exists(filename, function(exists) {
     // proxy if file does not exist
     if(!exists) return proxy(req, res);
 
-    // serve static file if exists
-    res.writeHead(200, mimeTypes[path.extname(filename).split(".")[1]]);
-    fs.createReadStream(filename).pipe(res);
+    // avoid Web Server Directory Traversal
+    if (path.relative(publicDir, filename).includes('../')) {
+      res.writeHead(403);
+      res.end('Not permitted');
+    } else {
+      // serve static file if exists
+      res.writeHead(200, mimeTypes[path.extname(filename).split(".")[1]]);
+      fs.createReadStream(filename).pipe(res);
+    }
   });
 }).listen(serverPort, function() {
   console.log('proxy /api requests to etcd on ' + etcdHost + ':' + etcdPort);
