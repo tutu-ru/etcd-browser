@@ -100,7 +100,14 @@ function proxy(client_req, client_res) {
   }
 
   if (opts.method != "GET") {
-       	console.log(opts.method + ' ' + opts.path);
+    console.log(opts.method + ' ' + opts.path);
+    try {
+      var values = parseUrlAndGetParams(opts.path);
+      values.host = client_req.headers.host;
+      tedLog(values);
+    } catch (e) {
+      console.warn('Error loggin to TED', e.toString());
+    }
   }
   client_req.pipe(requester(opts, function(res) {
     // if etcd returns that the requested  page  has been moved
@@ -108,13 +115,13 @@ function proxy(client_req, client_res) {
     // querying is not the leader. This will redo the request
     // on the leader which is reported by the Location header
     if (res.statusCode === 307) {
-        opts.hostname = url.parse(res.headers['location']).hostname;
-        client_req.pipe(requester(opts, function(res) {
-            console.log('Got response: ' + res.statusCode);
-            res.pipe(client_res, {end: true});
-        }, {end: true}));
-    } else {
+      opts.hostname = url.parse(res.headers['location']).hostname;
+      client_req.pipe(requester(opts, function(res) {
+        console.log('Got response: ' + res.statusCode);
         res.pipe(client_res, {end: true});
+      }, {end: true}));
+    } else {
+      res.pipe(client_res, {end: true});
     }
   }, {end: true}));
 }
@@ -138,4 +145,41 @@ function auth(req, res) {
   if(!auth) return false;
 
   return (auth[1] === authUser && auth[2] === authPass)
+}
+
+function parseUrlAndGetParams(originalUrl) {
+  var parsed = url.parse(originalUrl);
+  var node = parsed.pathname.replace('/v2/keys/', '');
+  var queryParts = parsed.query && parsed.query.split('&');
+  var prev = '';
+  var value = '';
+
+  queryParts && queryParts.forEach(function(part) {
+    var parsedQuery = part.split('='),
+        qKey = parsedQuery[0],
+        qVal = decodeURIComponent(parsedQuery[1]);
+    if (qKey === 'prev') {
+      prev = qVal;
+    } else if (qKey === 'value') {
+      value = qVal;
+    }
+  });
+
+  return { prev: prev, value: value, node: node };
+}
+
+function tedLog(messageObject) {
+  var tedMessage = JSON.stringify(messageObject);
+  var tedLogRequest = new http.ClientRequest({
+    hostname: 'event-dispatcher.corp.tutu.ru',
+    port: 80,
+    path: '/new/etcd_bro/node_changed',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(tedMessage)
+    }
+  });
+
+  tedLogRequest.end(tedMessage);
 }

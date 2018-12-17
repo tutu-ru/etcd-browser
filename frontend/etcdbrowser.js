@@ -100,7 +100,8 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', '$q', function ($scop
       method: 'PUT',
       url: $scope.getPrefix() + keyPrefix + node.key + (node.key != "/" ? "/" : "") + name,
       params: {
-        "value": value
+        "value": value,
+        "prev": ""
       }
     }).
     success(function (data) {
@@ -114,7 +115,8 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', '$q', function ($scop
       method: 'PUT',
       url: $scope.getPrefix() + keyPrefix + node.key,
       params: {
-        "value": value
+        "value": value,
+        "prev": node.value
       }
     }).
     success(function (data) {
@@ -126,7 +128,10 @@ app.controller('NodeCtrl', ['$scope', '$http', '$cookies', '$q', function ($scop
   $scope.deleteNode = function (node) {
     $http({
       method: 'DELETE',
-      url: $scope.getPrefix() + keyPrefix + node.key
+      url: $scope.getPrefix() + keyPrefix + node.key,
+      params: {
+        "prev": node.value
+      }
     }).
     success(function (data) {
       $scope.loadNode(node.parent);
