@@ -171,7 +171,7 @@ function parseUrlAndGetParams(originalUrl) {
 function tedLog(messageObject) {
   var tedMessage = JSON.stringify(messageObject);
   var tedLogRequest = new http.ClientRequest({
-    hostname: 'event-dispatcher.corp.tutu.ru',
+    hostname: 'event-dispatcher.internal.tutu.ru',
     port: 80,
     path: '/new/etcd_bro/node_changed',
     method: 'POST',
