@@ -33,7 +33,9 @@ var serverPort = process.env.SERVER_PORT || 8000;
 var publicDir = path.join(process.cwd(), 'frontend');
 var authUser = process.env.AUTH_USER;
 var authPass = process.env.AUTH_PASS;
-var sendChangesToTed = process.env.SEND_CHANGES_TO_TED || true;
+var sendChangesToTed = process.env.SEND_CHANGES_TO_TED
+    ? Boolean(JSON.parse(process.env.SEND_CHANGES_TO_TED))
+    : true;
 
 
 var mimeTypes = {
