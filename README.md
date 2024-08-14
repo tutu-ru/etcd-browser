@@ -26,6 +26,7 @@ You can configure the builtin server using environment variables:
  * ETCD_HOST: IP of the etcd host the internal proxy should use [172.17.42.1]
  * ETCD_PORT: Port of the etcd daemon [4001]
  * SERVER_PORT: Port of builtin server
+ * SEND_CHANGES_TO_TED: true или false. По умолчанию true. Управление тем, нужно ли отправлять события в ted
  
 If you use a secured etcd:
  * ETCDCTL_CA_FILE
