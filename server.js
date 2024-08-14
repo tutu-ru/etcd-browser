@@ -170,7 +170,7 @@ function parseUrlAndGetParams(originalUrl) {
 
 function tedLog(messageObject) {
   if (!sendChangesToTed) {
-    return
+    return;
   }
   var tedMessage = JSON.stringify(messageObject);
   var tedLogRequest = new http.ClientRequest({
